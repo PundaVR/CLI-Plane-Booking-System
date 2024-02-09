@@ -54,10 +54,10 @@ def DisplaySeats():
         print(f"{chr(letter)} {lettersStarboard}")
         letter-=1
         
-    walkway = "  "
+    aisle = "  "
     for a in range(numberOfSeats):
-        walkway+="==="
-    print(walkway)
+        aisle+="==="
+    print(aisle)
 
     for x in seatsPort:
         lettersPort = ""
@@ -76,7 +76,7 @@ def BookSeat(c, n):
 
 
 # A to C WORKS, NEED TO IMPLEMENT CONVERTCHAR IN BookSeat() AND ADD LOGIC TO DETERMINE IF ITS PORT OR STARBOARD
-x = ConvertCharacterToNum("A") #A=0 B=1 C=2 --  
+x = ConvertCharacterToNum("D") #A=0 B=1 C=2 --  
 print(x)
 BookSeat(x,2)
 DisplaySeats()
