@@ -151,17 +151,12 @@ def DisplaySeats(display = False):
         
         print(f"{chr(letter)} {lettersStarboard}")
         letter-=1
-<<<<<<< HEAD
 
     # Display Middle Walkway 
     walkway = "  "
-=======
-        
-    aisle = "  "
->>>>>>> 0cd80da841c48b891341fe084744600606dd3cc9
     for a in range(numberOfSeats):
-        aisle+="==="
-    print(aisle)
+        walkway+="==="
+    print(walkway)
 
     # Display Port (Left) Seats
     for x in seatsPort:
