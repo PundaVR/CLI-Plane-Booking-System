@@ -76,10 +76,31 @@ def ResetSeats():
         for character in range(charactersStarboard):
             SeatSet(f"{chr(65+charactersPort+character)}", f"{seatNum}", True, True)
    
-def LoadManifestFile():
-    if(AppConfigs["debug"]): print(f"LoadManifestFile()")
+def LoadManifestFile(filePath = "manifest_0.txt"):
+    if(AppConfigs["debug"]): print(f"LoadManifestFile(filePath = {filePath})")
+    manifestData = "data"
+    newManifest = {}
+    with open("manifest_0.txt", "r") as f:
+        manifestData = f.read()
+        
+    for entry in manifestData.replace(",", "").splitlines():#.split(","):
+        print(f">> {entry}")
+        newManifest[entry.split("-")[0]]=entry.split("-")[1]
+    print(manifestData)
 
-    pass
+    print("----")
+    for seat, name in manifest.items():
+        #manifest[seat] = name
+        print(f"{seat} | {name}")
+    print("----")
+    #manifest.clear()
+    for seat, name in newManifest.items():
+        manifest[seat] = name
+        print(f"{seat} | {name}")
+
+    print("------")
+    
+    
 
 def AssignSeatsFromManifest():
     if(AppConfigs["debug"]): print(f"AssignSeatsFromManifest()")
@@ -180,9 +201,12 @@ def ConvertCharacterToNum(c="A"):
 def StoreBookingInformation(seat, passenger):
     if(AppConfigs["debug"]): print(f"StoreBookingInformation(seat: {seat}, passenger: {passenger})")
     manifest[seat] = passenger
-
+    manifestStr = ""
+    for key, value in manifest.items():
+        manifestStr += f"{key}-{value},\n"
+    print(manifestStr)
     with open(manifestFile, 'w') as file:
-        file.write(manifest)
+        file.write(manifestStr)
     # store to a file as well
     #print(manifest)
 
@@ -308,7 +332,7 @@ def BlockSeats():
     BookSeat("E", "1") # E1
     BookSeat("E", "2") # E2
     BookSeat("E", "3") # E3
-    UnitTest_BookSeat()
+    #UnitTest_BookSeat()
 
 
 def DisplayMenu():
@@ -331,7 +355,8 @@ def DisplayMenu():
         case "3":
             ResetSeats()
         case "4":
-            AssignSeatsFromManifest()
+            LoadManifestFile()
+
 
 
 def StaffPortal():
@@ -357,7 +382,6 @@ def PassengerPortal():
     passengerFullName = input("Enter full name:\n")
     
     passengerSeat = InputSeat()
-
     while(BookSeat(passengerSeat[0], passengerSeat.split(passengerSeat[0])[-1], passengerFullName) is False):
         passengerSeat = InputSeat()
     print("Booked Seat!")
@@ -370,6 +394,8 @@ def BookingSystem():
     BlockSeats()
     while(True):
         DisplayMenu()
+        
+
 
 def UnitTest_ValidateUserInputNumbers():
     print("TESTING FUNCTION: ValidateUserInputNumbers()")
@@ -386,7 +412,7 @@ def UnitTest_ValidateSeatInput():
 def UnitTest_ResetSeats():
     pass
 
-def LoadManifestFile():
+def UnitTest_LoadManifestFile():
     pass
 
 def UnitTest_AssignSeatsFromManifest():
@@ -441,5 +467,6 @@ def UnitTest_BookingSystem():
     pass    
 
 BookingSystem()
+#LoadManifestFile()
 #BlockSeats()
 #DisplaySeats()
