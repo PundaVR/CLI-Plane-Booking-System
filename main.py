@@ -4,6 +4,7 @@ AppConfigs = {
 }
 
 manifest = {} # seat : passenger 
+global manifestFile 
 manifestFile = "manifest_0.txt"
 #bookingsPort = int(0)
 #bookingsStarboard = int(0)
@@ -62,9 +63,10 @@ def InputSeat():
     if(AppConfigs["debug"]): print(f"> RETURN: seat: {seat}")
     return seat
 
-def ResetSeats():
+def ResetSeats(saveToManifestFile = False):
     if(AppConfigs["debug"]): print(f"ResetSeats()")
     manifest.clear()
+    if saveToManifestFile: StoreBookingInformation(skipNewBooking=True)
 
     # Set all seats on the port side to Available side
     for seatNum in range(1, numberOfSeats+1, 1):
@@ -75,14 +77,32 @@ def ResetSeats():
     for seatNum in range(1, numberOfSeats+1, 1):
         for character in range(charactersStarboard):
             SeatSet(f"{chr(65+charactersPort+character)}", f"{seatNum}", True, True)
+    
    
-def LoadManifestFile(filePath = "manifest_0.txt"):
+def LoadManifestFile(getFilePath = False):
+    global manifestFile
+    filePath = manifestFile # default session filepath
+    ResetSeats()
+    if getFilePath:
+        filePath = input("Enter Manifest File Name:\n>>> ")
+        manifestFile = filePath
+
     if(AppConfigs["debug"]): print(f"LoadManifestFile(filePath = {filePath})")
     manifestData = "data"
     newManifest = {}
-    with open("manifest_0.txt", "r") as f:
-        manifestData = f.read()
+    try:
+        with open(filePath, "r") as f:
+            if(AppConfigs["debug"]): print(f"> filePath {manifestFile} Exists")
+    except:
+        with open(filePath, "x") as f:
+            manifestFile = filePath
+            if(AppConfigs["debug"]): print(f"> Created new file: {manifestFile}")
         
+    with open(manifestFile, "r") as f:
+        manifestData = f.read()
+    
+    
+
     for entry in manifestData.replace(",", "").splitlines():#.split(","):
         print(f">> {entry}")
         newManifest[entry.split("-")[0]]=entry.split("-")[1]
@@ -198,9 +218,11 @@ def ConvertCharacterToNum(c="A"):
     if(AppConfigs["debug"]): print(f"> RETURN: (convertedNum: {convertedNum}, isPortSide: {isPortSide})")
     return (convertedNum, isPortSide)
 
-def StoreBookingInformation(seat, passenger):
+def StoreBookingInformation(seat="A1", passenger="FirstName LastName", skipNewBooking = False):
     if(AppConfigs["debug"]): print(f"StoreBookingInformation(seat: {seat}, passenger: {passenger})")
-    manifest[seat] = passenger
+    if skipNewBooking == False:
+        manifest[seat] = passenger
+    
     manifestStr = ""
     for key, value in manifest.items():
         manifestStr += f"{key}-{value},\n"
@@ -352,10 +374,6 @@ def DisplayMenu():
             PassengerPortal()
         case "2": 
             StaffPortal()
-        case "3":
-            ResetSeats()
-        case "4":
-            LoadManifestFile()
 
 
 
@@ -363,9 +381,11 @@ def StaffPortal():
     if(AppConfigs["debug"]): print(f"StaffPortal()")
     # display menu options
     print("1. Seat Lookup")
+    print("2. Clear Manifest")
+    print("3. Load Manifest")
     print("0. Return to Menu")
     inp = input("Select an option: ")
-    while (ValidateUserInputNumbers(inp, 1) is False):
+    while (ValidateUserInputNumbers(inp, 4) is False):
         inp = input("Invalid Input!\nSelect an option: ")
     match (inp):
         case "0":
@@ -374,6 +394,10 @@ def StaffPortal():
             DisplaySeats(True)
             seat = InputSeat()
             SeatLookup(seat)
+        case "2":
+            ResetSeats()
+        case "3":
+            LoadManifestFile(True)
 
 
 def PassengerPortal():
@@ -466,6 +490,7 @@ def UnitTest_PassengerPortal():
 def UnitTest_BookingSystem():
     pass    
 
+#ResetSeats()
 BookingSystem()
 #LoadManifestFile()
 #BlockSeats()
