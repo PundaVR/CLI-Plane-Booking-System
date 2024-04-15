@@ -16,3 +16,4 @@ Passengers must be booked one at a time
 
 ## Staff
 - Enter a seat (i.e. F4) and be able to view the name of the person in there
+

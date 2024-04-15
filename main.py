@@ -1,11 +1,12 @@
 AppConfigs = {
-    "debug": True,
-    "requirePromptDisplaySeats": False
+    "debug": False,
+    "requirePromptDisplaySeats": True
 }
 
 manifest = {} # seat : passenger 
+mainfestFolderLocation = "./manifests/"
 global manifestFile 
-manifestFile = "manifest_0.txt"
+manifestFile = f"{mainfestFolderLocation}manifest_0.txt"
 #bookingsPort = int(0)
 #bookingsStarboard = int(0)
 sideBalanceThreshold = 10 # how many seats extra before side balancing occurs
@@ -30,6 +31,13 @@ seatsStarboard = [[seatAvailable for i in range(numbersStarboard)] for j in rang
 
 # LEVEL 3 FUNCTIONS - ERROR CHECKING + HELPERS OF HELPERS
 
+def GetManifest(fileName = "manifest_0"):
+    if AppConfigs["debug"]: print(f"GetManifest(fileName={fileName})\n> fileName.endswith('.txt')?: {fileName.endswith('.txt')}")
+    manifestPath = f"{mainfestFolderLocation}{fileName}"
+    if fileName.endswith(".txt") is False:
+        manifestPath += ".txt"
+    if AppConfigs["debug"]: print(f"> RETURN: manifestPath: {manifestPath}")
+    return manifestPath
 
 def ValidateUserInputNumbers(userInput, maxMenuNumberOption, excludeZero = False):
     validInput = False
@@ -42,6 +50,7 @@ def ValidateUserInputNumbers(userInput, maxMenuNumberOption, excludeZero = False
     return validInput
 
 def ValidateSeatInput(seat=""):
+    if(AppConfigs["debug"]): print(f"ValidateSeatInput(seat={seat})\n> ord(seat[0])={ord(seat[0])} | len(seat)={len(seat)} | boundry=(65-{65+charactersPort+charactersStarboard}, 1-{numberOfSeats})")
     validInput = False
     if(len(seat) == 2):
         if (seat[0].isalpha() and seat[1].isnumeric()): # check string is 2 characters (1st is num and 2nd is char)
@@ -51,6 +60,7 @@ def ValidateSeatInput(seat=""):
         if (seat[0].isalpha() and seat[1].isnumeric() and seat[2].isnumeric()): # check string is 2 characters (1st is num and 2nd is char)
             if (ord(seat[0]) >= 65 and ord(seat[0]) <= (64+charactersPort+charactersStarboard) and int(seat.split(seat[0])[-1]) > 0 and int(seat.split(seat[0])[-1]) <= numberOfSeats):
                 validInput = True
+
     if(AppConfigs["debug"]): print(f"> RETURN: validInput: {validInput}")
     return validInput
 
@@ -63,8 +73,12 @@ def InputSeat():
     if(AppConfigs["debug"]): print(f"> RETURN: seat: {seat}")
     return seat
 
-def ResetSeats(saveToManifestFile = False):
+def ResetSeats(saveToManifestFile = False, stopDebugLogs=True):
     if(AppConfigs["debug"]): print(f"ResetSeats()")
+    wasDebugTrue = False
+    if stopDebugLogs and AppConfigs["debug"]:
+        wasDebugTrue = True
+        AppConfigs["debug"]=False
     manifest.clear()
     if saveToManifestFile: StoreBookingInformation(skipNewBooking=True)
 
@@ -77,22 +91,25 @@ def ResetSeats(saveToManifestFile = False):
     for seatNum in range(1, numberOfSeats+1, 1):
         for character in range(charactersStarboard):
             SeatSet(f"{chr(65+charactersPort+character)}", f"{seatNum}", True, True)
-    
+    if wasDebugTrue:
+        AppConfigs["debug"] = True
    
 def LoadManifestFile(getFilePath = False):
+    if(AppConfigs["debug"]): print(f"LoadManifestFile(getfilePath = {getFilePath})")
+
     global manifestFile
     filePath = manifestFile # default session filepath
-    ResetSeats()
+    #ResetSeats()
     if getFilePath:
-        filePath = input("Enter Manifest File Name:\n>>> ")
+        filePath = GetManifest(input("Enter Manifest File Name:\n>>> "))
         manifestFile = filePath
 
-    if(AppConfigs["debug"]): print(f"LoadManifestFile(filePath = {filePath})")
+    if(AppConfigs["debug"]): print(f"\n> filePath = {filePath}")
     manifestData = "data"
     newManifest = {}
     try:
         with open(filePath, "r") as f:
-            if(AppConfigs["debug"]): print(f"> filePath {manifestFile} Exists")
+            if(AppConfigs["debug"]): print(f"> filePath {manifestFile} Exists:\n-----")
     except:
         with open(filePath, "x") as f:
             manifestFile = filePath
@@ -104,21 +121,20 @@ def LoadManifestFile(getFilePath = False):
     
 
     for entry in manifestData.replace(",", "").splitlines():#.split(","):
-        print(f">> {entry}")
+        if AppConfigs["debug"]: print(f">> {entry}")
         newManifest[entry.split("-")[0]]=entry.split("-")[1]
-    print(manifestData)
+    if AppConfigs["debug"]: 
+        print("-----\n> Current Manifest:")
+        for seat, name in manifest.items():
+            print(f">> {seat} | {name}")
+        ResetSeats()
+        print("Cleared current manifest\n-----\n> New Manifest:")
 
-    print("----")
-    for seat, name in manifest.items():
-        #manifest[seat] = name
-        print(f"{seat} | {name}")
-    print("----")
-    #manifest.clear()
     for seat, name in newManifest.items():
         manifest[seat] = name
-        print(f"{seat} | {name}")
+        if AppConfigs["debug"]: print(f">> {seat} | {name}")
 
-    print("------")
+    if AppConfigs["debug"]: print("-----")
     
     
 
@@ -139,7 +155,7 @@ def AssignSeatsFromManifest():
 
     # Re-assign all seats in the manifest
     for seat in manifest:
-        print(f"SEAT IN MANIFEST: {seat}")
+        if (AppConfigs["debug"]): print(f"SEAT IN MANIFEST: {seat}")
         if(len(seat) == 3):
             SeatSet(seat[0], f"{seat[1]}{seat[2]}")
         else:
@@ -147,7 +163,6 @@ def AssignSeatsFromManifest():
 
 def BalanceLockSide(portSide : bool):
     if(AppConfigs["debug"]): print(f"ResetSeats(portSide: {portSide})")
-
     if portSide:
         a = 0
         for i in seatsPort:
@@ -175,6 +190,22 @@ def UpdateBookingSides():
     if(AppConfigs["debug"]): print(f"> RETURN: [bookingsPort: {bookingsPort}, bookingsStarboard: {bookingsStarboard}]")
     return [bookingsPort, bookingsStarboard]
         
+def GetColumnCharacters(isLeft: bool):
+    letters = []
+    lettersStr = ""
+    if isLeft:
+        for i in range(len(charactersPort)):
+            letters.append(ord(65+i))
+        
+    else:
+        for i in range((charactersStarboard)):
+            letters.append(chr(65+(charactersPort)+i))
+    
+    for x in letters:
+        lettersStr += f"{x}, "
+    return lettersStr #i.e: "D, E, F, "
+            
+
 
 def SideBalancer():
     if(AppConfigs["debug"]): print(f"SideBalancer()")
@@ -182,15 +213,18 @@ def SideBalancer():
     bookingSides = UpdateBookingSides()
     bookingsPort = bookingSides[0]
     bookingsStarboard = bookingSides[1]
-
+    columnCharacters = ""
     if (bookingsPort-bookingsStarboard >= sideBalanceThreshold):
         if(AppConfigs["debug"]): print(f"> PORT >{sideBalanceThreshold} STARBOARD")
         BalanceLockSide(True)
+        columnCharacters = GetColumnCharacters(False)
+        print(f"Currently only seats from {columnCharacters}are available")
 
     elif (bookingsStarboard-bookingsPort >= sideBalanceThreshold):
         if(AppConfigs["debug"]): print(f"> STARBOARD >{sideBalanceThreshold} PORT")
         BalanceLockSide(False)
-
+        columnCharacters = GetColumnCharacters(True)
+        print(f"Currently only seats from {columnCharacters}are available")
     else:
         AssignSeatsFromManifest()
 
@@ -198,12 +232,12 @@ def SideBalancer():
 
 # LEVEL 2 FUCNTIONS - HELPERS
 
-def SeatConversion(c, n):
-    if(AppConfigs["debug"]): print(f"SeatConversion(c: {c}, n: {n})")
-    newChar = 0
-    newNum = n + 1
-    if(AppConfigs["debug"]): print(f"> RETURN: [newChar: {newChar}, newNum: {newNum}]")
-    return [newChar, newNum]
+#def SeatConversion(c, n): #i.e. c="A", n="3"
+#    if(AppConfigs["debug"]): print(f"SeatConversion(c: {c}, n: {n})")
+#    newChar = 0
+#    newNum = n + 1
+#    if(AppConfigs["debug"]): print(f"> RETURN: [newChar: {newChar}, newNum: {newNum}]")
+#    return [newChar, newNum]
 
 def ConvertCharacterToNum(c="A"):
     if(AppConfigs["debug"]): print(f"ConvertCharacterToNum(c: {c})")
@@ -226,11 +260,9 @@ def StoreBookingInformation(seat="A1", passenger="FirstName LastName", skipNewBo
     manifestStr = ""
     for key, value in manifest.items():
         manifestStr += f"{key}-{value},\n"
-    print(manifestStr)
+    if(AppConfigs["debug"]): print(f"> Manifest:\n-----\n{manifestStr}-----")
     with open(manifestFile, 'w') as file:
         file.write(manifestStr)
-    # store to a file as well
-    #print(manifest)
 
 def SeatGet(rowStr: str, seatNumStr: str, override = False):
     if(AppConfigs["debug"]): print(f"SeatGet(rowStr: {rowStr}, seatNumStr: {seatNumStr}, override: {override})")
@@ -253,6 +285,8 @@ def SeatGet(rowStr: str, seatNumStr: str, override = False):
     return isAvailable
 
 def SeatSet(rowStr, seatNumStr, override = False, makeSeatAvailable = False):
+    
+
     if(AppConfigs["debug"]): print(f"SeatSet(rowStr: {rowStr}, seatNumStr: {seatNumStr}, override: {override}, makeSeatAvailable: {makeSeatAvailable})")
     success = False
     seatSymbol = seatBooked
@@ -274,6 +308,7 @@ def SeatSet(rowStr, seatNumStr, override = False, makeSeatAvailable = False):
     else:
         print("Seat unavailable")
     if(AppConfigs["debug"]): print(f"> RETURN: success: {success}")
+    
     return success
 
 def SeatLookup(seat: str):
@@ -297,7 +332,6 @@ def DisplaySeats(display = False):
         if(inp.lower() != "y"):
             if(AppConfigs["debug"]): print(f"> RETURN")
             return
-    SideBalancer()
     # Display Seat Numbers
     seatNumbers = "  "
     for i in range(1, numberOfSeats+1):
@@ -307,32 +341,26 @@ def DisplaySeats(display = False):
             seatNumbers += f" {i}"
         else:
             seatNumbers += f" {i} "
-        
     print(seatNumbers)
 
     # Display Starboard (Right) Seats
     letter = 64 + charactersPort + charactersStarboard# chr(65) = A
-
     for x in seatsStarboard:
         lettersStarboard = ""
         for y in x:
             lettersStarboard+=y
-        
         print(f"{chr(letter)} {lettersStarboard}")
         letter-=1
-
     # Display Middle Walkway 
     walkway = "  "
     for a in range(numberOfSeats):
         walkway+="==="
     print(walkway)
-
     # Display Port (Left) Seats
     for x in seatsPort:
         lettersPort = ""
         for y in x:
             lettersPort+=y
-        
         print(f"{chr(letter)} {lettersPort}")
         letter-=1
     
@@ -348,19 +376,18 @@ def BookSeat(rowStr: str, seatNumStr: str, passengerFullName = "Seat Unavailable
 
 def BlockSeats():
     if(AppConfigs["debug"]): print(f"BlockSeats()")
-    BookSeat("B", "1") # B1
-    BookSeat("B", "2") # B2
-    BookSeat("B", "3") # B3
-    BookSeat("E", "1") # E1
-    BookSeat("E", "2") # E2
-    BookSeat("E", "3") # E3
-    #UnitTest_BookSeat()
+    BookSeat("B", "1", "unavailable") # B1
+    BookSeat("B", "2", "unavailable") # B2
+    BookSeat("B", "3", "unavailable") # B3
+    BookSeat("E", "1", "unavailable") # E1
+    BookSeat("E", "2", "unavailable") # E2
+    BookSeat("E", "3", "unavailable") # E3
 
 
 def DisplayMenu():
     if(AppConfigs["debug"]): print(f"DisplayMenu()")
     # display menu options
-    if (DisplaySeats(AppConfigs["requirePromptDisplaySeats"])): DisplaySeats()
+    #if (DisplaySeats(AppConfigs["requirePromptDisplaySeats"])): DisplaySeats()
     print("\n1. Passenger Portal")
     print("2. Staff Portal")
     print("0. Exit Program")
@@ -374,6 +401,8 @@ def DisplayMenu():
             PassengerPortal()
         case "2": 
             StaffPortal()
+        case "3":
+            UnitTest_BookSeat()
 
 
 
@@ -402,6 +431,7 @@ def StaffPortal():
 
 def PassengerPortal():
     if(AppConfigs["debug"]): print(f"PassengerPortal()")
+    SideBalancer()
     DisplaySeats()
     passengerFullName = input("Enter full name:\n")
     
@@ -430,68 +460,42 @@ def UnitTest_ValidateUserInputNumbers():
 def UnitTest_ValidateSeatInput():
     print("TESTING FUNCTION: ValidateSeatInput()")
     for i in range(-2, 10):
-        print(f"{chr(i+64)}{3*i} : {ValidateSeatInput(f'{chr(i+65)}{3*i}')}")
-        print(f"{chr(i+80)}{3+(i*2)} : {ValidateSeatInput(f'{chr(i+80)}{3+(i*2)}')}")
-        
-def UnitTest_ResetSeats():
-    pass
-
-def UnitTest_LoadManifestFile():
-    pass
-
-def UnitTest_AssignSeatsFromManifest():
-    pass
-
-def UnitTest_BalanceLockSide():
-    pass
-
-def UnitTest_UpdateBookingSides():
-    pass
-
-def UnitTest_SideBalancer():
-    pass
-
-def UnitTest_SeatConversion():
-    pass
-
-def UnitTest_StoreBookingInformation():
-    pass
-
-def UnitTest_SeatGet():
-    pass
-
-def UnitTest_SeatSet():
-    pass
-
-def UnitTest_SeatLookup():
-    pass
-
-def UnitTest_DisplaySeats():
-    pass
-
+        print(f"{chr(i+65)}{i} : {ValidateSeatInput(f'{chr(i+65)}{i}')}")
+        print(f"{chr(i+64)}{i+28} : {ValidateSeatInput(f'{chr(i+64)}{i+28}')}")  #  /print(f"{chr(i+80)}{3+(i*2)} : {ValidateSeatInput(f'{chr(i+80).upper()}{3+(i*2)}')}")
+   
+def UnitTest_GetManifest():
+    print("TESTING FUNCTION: GetManifest()")
+    print(f">>> mainfestFolderLocation = {mainfestFolderLocation}")
+    print(f"i_have_no_dot_txt --> {GetManifest('i_have_no_dot_txt')}")
+    print(f"I_HAVE_A_DOT_TXT.txt --> {GetManifest('I_HAVE_A_DOT_TXT.txt')}")
+    print(f"pretendtxt --> {GetManifest('pretendtxt')}")
+    print(f"txt.txt --> {GetManifest('txt.txt')}")
+    
+     
 def UnitTest_BookSeat():
     for i in range(10):
         BookSeat("A", f"{i}")
     BookSeat("D", "9")
     BookSeat("B", "9")
 
-def UnitTest_BlockSeats():
-    pass
+def UnitTest_ConvertCharacterToNum():
+    print("TESTING FUNCTION ConvertCharacterToNum()")
+    print(f"A -> {ConvertCharacterToNum('A')} | Expected(3, True)")
+    print(f"B -> {ConvertCharacterToNum('B')} | Expected(2, True)")
+    print(f"C -> {ConvertCharacterToNum('C')} | Expected(1, True)")
+    print(f"D -> {ConvertCharacterToNum('D')} | Expected(4, False)")
+    print(f"E -> {ConvertCharacterToNum('E')} | Expected(3, False)")
+    print(f"F -> {ConvertCharacterToNum('F')} | Expected(2, False)")
 
-def UnitTest_DisplayMenu():
-    pass
 
-def UnitTest_StaffPortal():
-    pass
 
-def UnitTest_PassengerPortal():
-    pass
+#BookingSystem()
 
-def UnitTest_BookingSystem():
-    pass    
-
-#ResetSeats()
-BookingSystem()
+UnitTest_ConvertCharacterToNum()
+#UnitTest_GetManifest()
+#UnitTest_ValidateSeatInput()
+#UnitTest_SideBalancer()
+#UnitTest_BookSeat()
 #LoadManifestFile()
 #BlockSeats()
 #DisplaySeats()
