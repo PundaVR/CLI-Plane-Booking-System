@@ -7,8 +7,7 @@ manifest = {} # seat : passenger
 mainfestFolderLocation = "./manifests/"
 global manifestFile 
 manifestFile = f"{mainfestFolderLocation}manifest_0.txt"
-#bookingsPort = int(0)
-#bookingsStarboard = int(0)
+
 sideBalanceThreshold = 10 # how many seats extra before side balancing occurs
 
 numberOfSeats = 31
@@ -28,9 +27,9 @@ charactersStarboard = 3
 seatsStarboard = [[seatAvailable for i in range(numbersStarboard)] for j in range(charactersStarboard)]
 
 
-
 # LEVEL 3 FUNCTIONS - ERROR CHECKING + HELPERS OF HELPERS
 
+# wow
 def GetManifest(fileName = "manifest_0"):
     if AppConfigs["debug"]: print(f"GetManifest(fileName={fileName})\n> fileName.endswith('.txt')?: {fileName.endswith('.txt')}")
     manifestPath = f"{mainfestFolderLocation}{fileName}"
@@ -39,7 +38,16 @@ def GetManifest(fileName = "manifest_0"):
     if AppConfigs["debug"]: print(f"> RETURN: manifestPath: {manifestPath}")
     return manifestPath
 
-def ValidateUserInputNumbers(userInput, maxMenuNumberOption, excludeZero = False):
+def ValidateUserInputNumbers(userInput:str, maxMenuNumberOption:int, excludeZero = False):
+    """
+    Takes in a numerical user input and returns if it is valid\n
+    userInput
+        Input from the user
+    maxMenuNumberOption 
+        The highest valid number the user can use
+    excludeZero
+        Is 0 a valid number?
+    """
     validInput = False
     if (userInput.isnumeric() and int(userInput) <= maxMenuNumberOption and int(userInput) >= 0):
         if(excludeZero and userInput=="0"):
@@ -50,6 +58,9 @@ def ValidateUserInputNumbers(userInput, maxMenuNumberOption, excludeZero = False
     return validInput
 
 def ValidateSeatInput(seat=""):
+    """
+    Takes in the seat as a string (i.e. "A4") and returns 'True' if the seat is a valid seat on the plane
+    """
     if(AppConfigs["debug"]): print(f"ValidateSeatInput(seat={seat})\n> ord(seat[0])={ord(seat[0])} | len(seat)={len(seat)} | boundry=(65-{65+charactersPort+charactersStarboard}, 1-{numberOfSeats})")
     validInput = False
     if(len(seat) == 2):
@@ -65,6 +76,9 @@ def ValidateSeatInput(seat=""):
     return validInput
 
 def InputSeat():
+    """
+    Prompts the user to input a seat, looping until a valid seat is entered which is then returned as a string (i.e. 'D4').
+    """
     seat = "null"
     seatInput = input("Choose Seat (i.e. B7):\n>>>").upper()
     while(ValidateSeatInput(seatInput) == False):
@@ -117,8 +131,6 @@ def LoadManifestFile(getFilePath = False):
         
     with open(manifestFile, "r") as f:
         manifestData = f.read()
-    
-    
 
     for entry in manifestData.replace(",", "").splitlines():#.split(","):
         if AppConfigs["debug"]: print(f">> {entry}")
@@ -127,12 +139,17 @@ def LoadManifestFile(getFilePath = False):
         print("-----\n> Current Manifest:")
         for seat, name in manifest.items():
             print(f">> {seat} | {name}")
-        ResetSeats()
+        #ResetSeats()
         print("Cleared current manifest\n-----\n> New Manifest:")
 
+    ResetSeats()
     for seat, name in newManifest.items():
         manifest[seat] = name
         if AppConfigs["debug"]: print(f">> {seat} | {name}")
+    
+    
+    StoreBookingInformation(skipNewBooking=True)# POINT
+    AssignSeatsFromManifest()
 
     if AppConfigs["debug"]: print("-----")
     
@@ -286,7 +303,6 @@ def SeatGet(rowStr: str, seatNumStr: str, override = False):
 
 def SeatSet(rowStr, seatNumStr, override = False, makeSeatAvailable = False):
     
-
     if(AppConfigs["debug"]): print(f"SeatSet(rowStr: {rowStr}, seatNumStr: {seatNumStr}, override: {override}, makeSeatAvailable: {makeSeatAvailable})")
     success = False
     seatSymbol = seatBooked
@@ -410,8 +426,8 @@ def StaffPortal():
     if(AppConfigs["debug"]): print(f"StaffPortal()")
     # display menu options
     print("1. Seat Lookup")
-    print("2. Clear Manifest")
-    print("3. Load Manifest")
+    print(f"2. Clear Manifest ({len(manifest)} booked seats)")
+    print(f"3. Load Manifest (active: '{manifestFile}')")
     print("0. Return to Menu")
     inp = input("Select an option: ")
     while (ValidateUserInputNumbers(inp, 4) is False):
@@ -448,9 +464,7 @@ def BookingSystem():
     BlockSeats()
     while(True):
         DisplayMenu()
-        
-
-
+     
 def UnitTest_ValidateUserInputNumbers():
     print("TESTING FUNCTION: ValidateUserInputNumbers()")
     for i in range(-1, 10, 1):
@@ -489,9 +503,9 @@ def UnitTest_ConvertCharacterToNum():
 
 
 
-#BookingSystem()
+BookingSystem()
 
-UnitTest_ConvertCharacterToNum()
+#UnitTest_ConvertCharacterToNum()
 #UnitTest_GetManifest()
 #UnitTest_ValidateSeatInput()
 #UnitTest_SideBalancer()
