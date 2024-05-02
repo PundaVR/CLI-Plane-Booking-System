@@ -211,11 +211,11 @@ def GetColumnCharacters(isLeft: bool):
     letters = []
     lettersStr = ""
     if isLeft:
-        for i in range(len(charactersPort)):
-            letters.append(ord(65+i))
+        for i in range(charactersPort):
+            letters.append(chr(65+i))
         
     else:
-        for i in range((charactersStarboard)):
+        for i in range(charactersStarboard):
             letters.append(chr(65+(charactersPort)+i))
     
     for x in letters:
@@ -408,7 +408,7 @@ def DisplayMenu():
     print("2. Staff Portal")
     print("0. Exit Program")
     inp = input("Select an option: ")
-    while (ValidateUserInputNumbers(inp, 4) is False):
+    while (ValidateUserInputNumbers(inp, 3) is False):
         inp = input("Invalid Input!\nSelect an option: ")
     match (inp):
         case "0":
@@ -436,6 +436,7 @@ def StaffPortal():
         case "0":
             DisplayMenu()
         case "1":
+            AssignSeatsFromManifest()
             DisplaySeats(True)
             seat = InputSeat()
             SeatLookup(seat)
@@ -487,10 +488,10 @@ def UnitTest_GetManifest():
     
      
 def UnitTest_BookSeat():
-    for i in range(10):
-        BookSeat("A", f"{i}")
-    BookSeat("D", "9")
-    BookSeat("B", "9")
+    for i in range(9):
+        BookSeat("D", f"{i}")
+    #BookSeat("D", "9")
+    #BookSeat("B", "9")
 
 def UnitTest_ConvertCharacterToNum():
     print("TESTING FUNCTION ConvertCharacterToNum()")
